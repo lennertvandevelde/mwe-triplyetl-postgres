@@ -1,0 +1,14 @@
+
+DB_PORT=5432
+DB_DATABASE=graphdb
+DB_HOST=localhost
+DB_USERNAME=myuser
+DB_PASSWORD=mypassword
+
+DB_SCHEME=graphschema
+DB_TABLE=graphtable
+
+DB_URL=postgres://myuser:mypassword@localhost:5432/graphdb
+
+
+TRIPLYDB_GITLAB_TOKEN=
