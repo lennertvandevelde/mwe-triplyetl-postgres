@@ -1,27 +1,25 @@
-import { Etl, fromJson, Source, toRdf } from "@triplyetl/etl/generic";
+import { Etl, fromJson, Source } from "@triplyetl/etl/generic";
 import { addIri, str, triple } from "@triplyetl/etl/ratt";
 import { sdo } from "@triplyetl/etl/vocab";
-import toPostgres, { createConnectionOnce } from "./helpers.js";
-import postgres from 'postgres'
+import { createConnection, toPostgres } from "./helpers.js";
 import { postgresConnector } from "./config.js";
 import * as os from 'os'
+import { dbExtractScheme, dbExtractTable } from './config.js'
 
 function formatMemory(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
 
 export default async function (): Promise<Etl> {
-    const etl = new Etl({
-    })
+
+    const etl = new Etl()
+
     etl.use(
         fromJson(
             Source.file('output.json'),
             { toRecords: (json: any) => {
                 return json["results"]} }
         ),
-
-        createConnectionOnce(postgresConnector),
-
         addIri(
             {
                 prefix: str('https://test.com/'),
@@ -42,7 +40,12 @@ export default async function (): Promise<Etl> {
 
             return await next()
         },
-        toRdf(context => toPostgres(context.getString('id'), context.record.connection as any as postgres.Sql<any>))
+
+        toPostgres((record, turtle, sql) => sql`
+            UPDATE ${sql(dbExtractScheme)}.${sql(dbExtractTable)}
+            SET triples = ${turtle}
+            WHERE id = ${record.id}
+        `, createConnection(postgresConnector))
 
     )
     
